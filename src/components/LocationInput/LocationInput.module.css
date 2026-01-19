@@ -1,0 +1,60 @@
+.locationInputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.fallbackNote {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.loading {
+  color: var(--primary-color);
+}
+
+.noApi {
+  color: var(--warning-color);
+}
+
+/* Override Google's autocomplete dropdown styles to match our theme */
+:global(.pac-container) {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  margin-top: 0.25rem;
+  font-family: inherit;
+}
+
+:global(.pac-item) {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-color);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+:global(.pac-item:first-child) {
+  border-top: none;
+}
+
+:global(.pac-item:hover) {
+  background-color: var(--bg-secondary);
+}
+
+:global(.pac-item-selected) {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+:global(.pac-icon) {
+  margin-top: 0.25rem;
+}
+
+:global(.pac-item-query) {
+  color: var(--text-primary);
+  font-weight: 600;
+}
