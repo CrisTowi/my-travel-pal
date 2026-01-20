@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTravelContext } from '../../context/TravelContext';
 import LocationInput from '../LocationInput/LocationInput';
+import TravelerAvatar from '../TravelerAvatar/TravelerAvatar';
+import AddTravelerModal from '../AddTravelerModal/AddTravelerModal';
 import styles from './CreateTravelModal.module.css';
 
 const CreateTravelModal = ({ isOpen, onClose }) => {
-  const { addTravelPlan } = useTravelContext();
+  const { addTravelPlan, globalTravelers, addTravelerToTrip } = useTravelContext();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -17,49 +19,80 @@ const CreateTravelModal = ({ isOpen, onClose }) => {
     startDate: '',
     endDate: '',
   });
+  const [selectedTravelers, setSelectedTravelers] = useState([]);
+  const [isAddTravelerModalOpen, setIsAddTravelerModalOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, locationData } = e.target;
     
     // Handle location inputs with location data
     if (name === 'startLocation') {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         startLocation: value,
         startLocationData: locationData || null,
-      });
+      }));
     } else if (name === 'endLocation') {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         endLocation: value,
         endLocationData: locationData || null,
-      });
+      }));
     }
     // If changing start date, ensure end date is not before it
-    else if (name === 'startDate' && formData.endDate && value > formData.endDate) {
-      setFormData({
-        ...formData,
-        startDate: value,
-        endDate: value, // Reset end date to match start date
+    else if (name === 'startDate') {
+      setFormData(prev => {
+        if (prev.endDate && value > prev.endDate) {
+          return {
+            ...prev,
+            startDate: value,
+            endDate: value, // Reset end date to match start date
+          };
+        }
+        return {
+          ...prev,
+          startDate: value,
+        };
       });
     } 
     // If changing end date, ensure it's not before start date
-    else if (name === 'endDate' && formData.startDate && value < formData.startDate) {
-      setFormData({
-        ...formData,
-        endDate: formData.startDate, // Set to start date minimum
+    else if (name === 'endDate') {
+      setFormData(prev => {
+        if (prev.startDate && value < prev.startDate) {
+          return {
+            ...prev,
+            endDate: prev.startDate, // Set to start date minimum
+          };
+        }
+        return {
+          ...prev,
+          endDate: value,
+        };
       });
     } else {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         [name]: value,
-      });
+      }));
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Check if at least one traveler is selected
+    if (selectedTravelers.length === 0) {
+      alert('Please select at least one traveler for this trip.');
+      return;
+    }
+    
     const planId = addTravelPlan(formData);
+    
+    // Add selected travelers to the new travel plan
+    selectedTravelers.forEach(travelerId => {
+      addTravelerToTrip(planId, travelerId);
+    });
+    
     setFormData({
       name: '',
       description: '',
@@ -70,8 +103,22 @@ const CreateTravelModal = ({ isOpen, onClose }) => {
       startDate: '',
       endDate: '',
     });
+    setSelectedTravelers([]);
     onClose();
     navigate(`/travel/${planId}`);
+  };
+
+  const toggleTraveler = (travelerId) => {
+    setSelectedTravelers(prev => 
+      prev.includes(travelerId)
+        ? prev.filter(id => id !== travelerId)
+        : [...prev, travelerId]
+    );
+  };
+
+  const handleNewTravelerAdded = (newTraveler) => {
+    // Automatically select the newly added traveler
+    setSelectedTravelers(prev => [...prev, newTraveler.id]);
   };
 
   const handleBackdropClick = (e) => {
@@ -187,6 +234,50 @@ const CreateTravelModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
+          {/* Travelers Selection */}
+          <div className={styles.formGroup}>
+            <div className={styles.travelersHeader}>
+              <label className={styles.label}>
+                Travelers <span className={styles.required}>*</span>
+              </label>
+              <button
+                type="button"
+                className={styles.addTravelerButton}
+                onClick={() => setIsAddTravelerModalOpen(true)}
+                title="Add new traveler"
+              >
+                <span className={styles.addTravelerIcon}>+</span>
+              </button>
+            </div>
+
+            {globalTravelers.length === 0 ? (
+              <div className={styles.noTravelers}>
+                <p>No travelers found. Add your first traveler to start.</p>
+              </div>
+            ) : (
+              <div className={styles.travelersGrid}>
+                {globalTravelers.map((traveler) => (
+                  <div
+                    key={traveler.id}
+                    className={`${styles.travelerChip} ${
+                      selectedTravelers.includes(traveler.id) ? styles.travelerChipActive : ''
+                    }`}
+                    onClick={() => toggleTraveler(traveler.id)}
+                  >
+                    <TravelerAvatar traveler={traveler} size="small" />
+                    <span className={styles.travelerChipName}>{traveler.name}</span>
+                    {selectedTravelers.includes(traveler.id) && (
+                      <span className={styles.travelerChipCheck}>✓</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className={styles.travelersHint}>
+              Select at least one traveler for this trip
+            </p>
+          </div>
+
           <div className={styles.actions}>
             <button
               type="button"
@@ -201,6 +292,12 @@ const CreateTravelModal = ({ isOpen, onClose }) => {
           </div>
         </form>
       </div>
+
+      <AddTravelerModal
+        isOpen={isAddTravelerModalOpen}
+        onClose={() => setIsAddTravelerModalOpen(false)}
+        onTravelerAdded={handleNewTravelerAdded}
+      />
     </div>
   );
 };

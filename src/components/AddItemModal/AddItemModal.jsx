@@ -69,29 +69,45 @@ const AddItemModal = ({ isOpen, onClose, planId, plan, itemType, itemConfig, edi
     
     // Handle location input with location data
     if (name === 'location') {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         location: value,
         locationData: locationData || null,
-      });
+      }));
     }
     // For hotels, ensure check-out is not before check-in
-    else if (name === 'checkIn' && formData.checkOut && value > formData.checkOut) {
-      setFormData({
-        ...formData,
-        checkIn: value,
-        checkOut: value, // Reset check-out to match check-in
+    else if (name === 'checkIn') {
+      setFormData(prev => {
+        if (prev.checkOut && value > prev.checkOut) {
+          return {
+            ...prev,
+            checkIn: value,
+            checkOut: value, // Reset check-out to match check-in
+          };
+        }
+        return {
+          ...prev,
+          checkIn: value,
+        };
       });
-    } else if (name === 'checkOut' && formData.checkIn && value < formData.checkIn) {
-      setFormData({
-        ...formData,
-        checkOut: formData.checkIn, // Set to check-in date minimum
+    } else if (name === 'checkOut') {
+      setFormData(prev => {
+        if (prev.checkIn && value < prev.checkIn) {
+          return {
+            ...prev,
+            checkOut: prev.checkIn, // Set to check-in date minimum
+          };
+        }
+        return {
+          ...prev,
+          checkOut: value,
+        };
       });
     } else {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         [name]: value,
-      });
+      }));
     }
   };
 

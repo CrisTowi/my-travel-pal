@@ -13,7 +13,7 @@ const TravelersManager = ({ planId }) => {
   } = useTravelContext();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [showAllTravelers, setShowAllTravelers] = useState(false);
+  const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
   
   const tripTravelers = getTripTravelers(planId);
   const availableTravelers = globalTravelers.filter(
@@ -22,7 +22,6 @@ const TravelersManager = ({ planId }) => {
 
   const handleAddExisting = (travelerId) => {
     addTravelerToTrip(planId, travelerId);
-    setShowAllTravelers(false);
   };
 
   const handleRemove = (travelerId) => {
@@ -46,15 +45,13 @@ const TravelersManager = ({ planId }) => {
           Travelers ({tripTravelers.length})
         </h3>
         <div className={styles.headerActions}>
-          {availableTravelers.length > 0 && (
-            <button
-              className={styles.addExistingButton}
-              onClick={() => setShowAllTravelers(!showAllTravelers)}
-              title="Add existing traveler"
-            >
-              <span className={styles.buttonIcon}>👤</span>
-            </button>
-          )}
+          <button
+            className={styles.addExistingButton}
+            onClick={() => setIsSelectModalOpen(true)}
+            title="Add existing traveler"
+          >
+            <span className={styles.buttonIcon}>👤</span>
+          </button>
           <button
             className={styles.addButton}
             onClick={() => setIsAddModalOpen(true)}
@@ -64,23 +61,6 @@ const TravelersManager = ({ planId }) => {
           </button>
         </div>
       </div>
-
-      {showAllTravelers && availableTravelers.length > 0 && (
-        <div className={styles.availableList}>
-          <p className={styles.availableTitle}>Select from your travelers:</p>
-          {availableTravelers.map((traveler) => (
-            <div
-              key={traveler.id}
-              className={styles.availableItem}
-              onClick={() => handleAddExisting(traveler.id)}
-            >
-              <TravelerAvatar traveler={traveler} size="small" />
-              <span className={styles.availableName}>{traveler.name}</span>
-              <span className={styles.addIcon}>+</span>
-            </div>
-          ))}
-        </div>
-      )}
 
       <div className={styles.travelersList}>
         {tripTravelers.length === 0 ? (
@@ -118,6 +98,54 @@ const TravelersManager = ({ planId }) => {
         onClose={() => setIsAddModalOpen(false)}
         onTravelerAdded={handleNewTravelerAdded}
       />
+
+      {/* Select Existing Travelers Modal */}
+      {isSelectModalOpen && (
+        <div className={styles.modalBackdrop} onClick={() => setIsSelectModalOpen(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Add Existing Travelers</h3>
+              <button
+                className={styles.modalClose}
+                onClick={() => setIsSelectModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalContent}>
+              {availableTravelers.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <p>All your travelers are already on this trip!</p>
+                  <p className={styles.emptyHint}>
+                    Create a new traveler using the "+" button to add more people.
+                  </p>
+                </div>
+              ) : (
+                <div className={styles.travelersGrid}>
+                  {availableTravelers.map((traveler) => (
+                    <div
+                      key={traveler.id}
+                      className={styles.selectableTraveler}
+                      onClick={() => handleAddExisting(traveler.id)}
+                    >
+                      <TravelerAvatar traveler={traveler} size="medium" />
+                      <div className={styles.selectableName}>{traveler.name}</div>
+                      {(traveler.passportNumber || traveler.dateOfBirth) && (
+                        <div className={styles.selectableMeta}>
+                          {traveler.passportNumber && `${traveler.passportNumber}`}
+                        </div>
+                      )}
+                      <div className={styles.selectableAdd}>
+                        <span>+</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

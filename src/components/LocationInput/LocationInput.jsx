@@ -44,7 +44,13 @@ const LocationInput = ({
 
   // Initialize autocomplete
   useEffect(() => {
-    if (!scriptLoaded || !inputRef.current || autocompleteRef.current) return;
+    if (!scriptLoaded || !inputRef.current) return;
+
+    // Clean up existing autocomplete if it exists
+    if (autocompleteRef.current) {
+      window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      autocompleteRef.current = null;
+    }
 
     try {
       const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
@@ -52,7 +58,7 @@ const LocationInput = ({
         fields: ['formatted_address', 'geometry', 'name', 'place_id'],
       });
 
-      autocomplete.addListener('place_changed', () => {
+      const listener = autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
 
         if (place.geometry) {
@@ -78,21 +84,42 @@ const LocationInput = ({
       });
 
       autocompleteRef.current = autocomplete;
+
+      // Cleanup function
+      return () => {
+        if (listener) {
+          window.google.maps.event.removeListener(listener);
+        }
+        if (autocompleteRef.current) {
+          window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        }
+      };
     } catch (error) {
       console.error('Error initializing Google Places Autocomplete:', error);
     }
-  }, [scriptLoaded, name, onChange]);
+  }, [scriptLoaded, name]);
 
   const handleChange = (e) => {
+    const newValue = e.target.value;
+
     // Allow typing and pass through to parent
     onChange({
       target: {
         name,
-        value: e.target.value,
+        value: newValue,
         locationData: null, // Clear location data when manually typing
       },
     });
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (autocompleteRef.current) {
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={styles.locationInputWrapper}>
