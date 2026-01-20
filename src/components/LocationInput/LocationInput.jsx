@@ -1,24 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
+import { loadGoogleMapsScript } from '../../utils/googleMapsLoader';
 import styles from './LocationInput.module.css';
 
-const LocationInput = ({ 
-  id, 
-  name, 
-  value, 
-  onChange, 
-  placeholder, 
+const LocationInput = ({
+  id,
+  name,
+  value,
+  onChange,
+  placeholder,
   required,
-  className 
+  className
 }) => {
   const inputRef = useRef(null);
   const autocompleteRef = useRef(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [locationData, setLocationData] = useState(null);
 
-  // Load Google Maps script
+  // Load Google Maps script using centralized loader
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    
+
     // Check if script already loaded
     if (window.google?.maps?.places) {
       setScriptLoaded(true);
@@ -31,18 +32,14 @@ const LocationInput = ({
       return;
     }
 
-    // Load the script
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setScriptLoaded(true);
-    script.onerror = () => console.error('Failed to load Google Maps script');
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup if needed
-    };
+    // Load using centralized loader
+    loadGoogleMapsScript()
+      .then(() => {
+        setScriptLoaded(true);
+      })
+      .catch((error) => {
+        console.error('Failed to load Google Maps script:', error);
+      });
   }, []);
 
   // Initialize autocomplete
@@ -57,7 +54,7 @@ const LocationInput = ({
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
-        
+
         if (place.geometry) {
           const locationInfo = {
             name: place.name || place.formatted_address,
@@ -68,7 +65,7 @@ const LocationInput = ({
           };
 
           setLocationData(locationInfo);
-          
+
           // Call onChange with both the display name and full location data
           onChange({
             target: {

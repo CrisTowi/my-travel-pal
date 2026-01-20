@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { loadGoogleMapsScript } from '../../utils/googleMapsLoader';
 import styles from './MapView.module.css';
 
 const MapView = ({ plan, itemTypes, onEditItem }) => {
@@ -8,7 +9,7 @@ const MapView = ({ plan, itemTypes, onEditItem }) => {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // Load Google Maps script
+  // Load Google Maps script using centralized loader
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
     
@@ -24,14 +25,14 @@ const MapView = ({ plan, itemTypes, onEditItem }) => {
       return;
     }
 
-    // Load the script
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setScriptLoaded(true);
-    script.onerror = () => console.error('Failed to load Google Maps script');
-    document.head.appendChild(script);
+    // Load using centralized loader
+    loadGoogleMapsScript()
+      .then(() => {
+        setScriptLoaded(true);
+      })
+      .catch((error) => {
+        console.error('Failed to load Google Maps script:', error);
+      });
   }, []);
 
   // Get all items with location data

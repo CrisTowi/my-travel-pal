@@ -101,6 +101,19 @@ When a location is selected via autocomplete, the following data is stored:
 
 This data is used for the interactive map view and location-based features.
 
+## Technical Notes
+
+### Google Maps Script Loading
+
+The application uses a centralized Google Maps API loader (`src/utils/googleMapsLoader.js`) to prevent duplicate script loading. This ensures:
+
+- Script is loaded only once, even with multiple components using it
+- Prevents "multiple includes" errors in production
+- Handles concurrent loading requests via callback queue
+- Checks for existing scripts before loading
+
+Both `LocationInput` and `MapView` components use this centralized loader, ensuring no conflicts.
+
 ## Using the Map View
 
 ### Adding Items with Locations
