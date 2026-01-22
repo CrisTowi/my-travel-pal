@@ -17,6 +17,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -38,6 +39,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -98,7 +100,7 @@
 }
 
 .required {
-  color: #ef4444;
+  color: var(--required-color);
   font-weight: 700;
 }
 
@@ -125,6 +127,21 @@
 
 .input::placeholder {
   color: var(--text-light);
+}
+
+.inputError {
+  border-color: var(--required-color);
+}
+
+.inputError:focus {
+  border-color: var(--required-color);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.errorMessage {
+  font-size: 0.75rem;
+  color: var(--required-color);
+  margin-top: 0.25rem;
 }
 
 .hint {

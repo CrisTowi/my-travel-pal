@@ -86,12 +86,8 @@ const CreateTravelModal = ({ isOpen, onClose }) => {
       return;
     }
     
-    const planId = addTravelPlan(formData);
-    
-    // Add selected travelers to the new travel plan
-    selectedTravelers.forEach(travelerId => {
-      addTravelerToTrip(planId, travelerId);
-    });
+    // Add travelers directly when creating the plan to avoid race conditions
+    const planId = addTravelPlan(formData, selectedTravelers);
     
     setFormData({
       name: '',

@@ -29,7 +29,7 @@ export const TravelProvider = ({ children }) => {
     localStorage.setItem('globalTravelers', JSON.stringify(globalTravelers));
   }, [globalTravelers]);
 
-  const addTravelPlan = (plan) => {
+  const addTravelPlan = (plan, travelerIds = []) => {
     const newPlan = {
       ...plan,
       id: Date.now().toString(),
@@ -39,9 +39,15 @@ export const TravelProvider = ({ children }) => {
       restaurants: [],
       attractions: [],
       transportation: [],
-      travelers: [],
+      travelers: travelerIds, // Include travelers in the initial plan
     };
-    setTravelPlans([...travelPlans, newPlan]);
+    // Use functional update to ensure we have the latest state
+    setTravelPlans(prevPlans => {
+      const updatedPlans = [...prevPlans, newPlan];
+      // Save to localStorage immediately to ensure persistence before navigation
+      localStorage.setItem('travelPlans', JSON.stringify(updatedPlans));
+      return updatedPlans;
+    });
     return newPlan.id;
   };
 
@@ -56,7 +62,17 @@ export const TravelProvider = ({ children }) => {
   };
 
   const getTravelPlan = (id) => {
-    return travelPlans.find(plan => plan.id === id);
+    // First check the state
+    const plan = travelPlans.find(plan => plan.id === id);
+    if (plan) return plan;
+    
+    // Fallback to localStorage in case state hasn't updated yet
+    const saved = localStorage.getItem('travelPlans');
+    if (saved) {
+      const savedPlans = JSON.parse(saved);
+      return savedPlans.find(plan => plan.id === id);
+    }
+    return null;
   };
 
   const addItemToTravelPlan = (planId, itemType, item) => {
@@ -125,15 +141,20 @@ export const TravelProvider = ({ children }) => {
 
   // Travel Plan Travelers Management
   const addTravelerToTrip = (planId, travelerId) => {
-    setTravelPlans(travelPlans.map(plan => {
-      if (plan.id === planId) {
-        const travelers = plan.travelers || [];
-        if (!travelers.includes(travelerId)) {
-          return { ...plan, travelers: [...travelers, travelerId] };
+    setTravelPlans(prevPlans => {
+      const updatedPlans = prevPlans.map(plan => {
+        if (plan.id === planId) {
+          const travelers = plan.travelers || [];
+          if (!travelers.includes(travelerId)) {
+            return { ...plan, travelers: [...travelers, travelerId] };
+          }
         }
-      }
-      return plan;
-    }));
+        return plan;
+      });
+      // Save to localStorage immediately
+      localStorage.setItem('travelPlans', JSON.stringify(updatedPlans));
+      return updatedPlans;
+    });
   };
 
   const removeTravelerFromTrip = (planId, travelerId) => {

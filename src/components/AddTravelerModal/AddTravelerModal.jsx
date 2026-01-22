@@ -6,38 +6,80 @@ const AddTravelerModal = ({ isOpen, onClose, editTraveler, onTravelerAdded }) =>
   const { addGlobalTraveler, updateGlobalTraveler } = useTravelContext();
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     passportNumber: '',
     dateOfBirth: '',
     profilePicture: '',
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (editTraveler && isOpen) {
       setFormData({
         name: editTraveler.name || '',
+        email: editTraveler.email || '',
         passportNumber: editTraveler.passportNumber || '',
         dateOfBirth: editTraveler.dateOfBirth || '',
         profilePicture: editTraveler.profilePicture || '',
       });
+      setErrors({});
     } else if (!isOpen) {
       setFormData({
         name: '',
+        email: '',
         passportNumber: '',
         dateOfBirth: '',
         profilePicture: '',
       });
+      setErrors({});
     }
   }, [editTraveler, isOpen]);
 
+  const validateEmail = (email) => {
+    // Email is optional, but if provided, it must be valid
+    if (!email || email.trim() === '') {
+      return ''; // Empty email is valid since it's optional
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    return '';
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+    
+    // Validate email in real-time
+    if (name === 'email') {
+      const error = validateEmail(value);
+      setErrors(prev => ({
+        ...prev,
+        email: error || undefined,
+      }));
+    } else if (errors[name]) {
+      // Clear error for other fields when user starts typing
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate email before submission
+    const emailError = validateEmail(formData.email);
+    if (emailError) {
+      setErrors({ email: emailError });
+      return;
+    }
     
     if (editTraveler) {
       updateGlobalTraveler(editTraveler.id, formData);
@@ -50,10 +92,12 @@ const AddTravelerModal = ({ isOpen, onClose, editTraveler, onTravelerAdded }) =>
     
     setFormData({
       name: '',
+      email: '',
       passportNumber: '',
       dateOfBirth: '',
       profilePicture: '',
     });
+    setErrors({});
     onClose();
   };
 
@@ -92,6 +136,24 @@ const AddTravelerModal = ({ isOpen, onClose, editTraveler, onTravelerAdded }) =>
               onChange={handleChange}
               required
             />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.label}>
+              Email <span className={styles.optional}>(optional)</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
+              placeholder="e.g., john.doe@example.com"
+              value={formData.email}
+              onChange={handleChange}
+            />
+            {errors.email && (
+              <span className={styles.errorMessage}>{errors.email}</span>
+            )}
           </div>
 
           <div className={styles.formGroup}>
