@@ -7,7 +7,7 @@ import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import styles from './Dashboard.module.css';
 
 const Dashboard = () => {
-  const { travelPlans, deleteTravelPlan } = useTravelContext();
+  const { travelPlans, deleteTravelPlan, loading } = useTravelContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmState, setConfirmState] = useState({ isOpen: false, planId: null });
   const navigate = useNavigate();
@@ -16,9 +16,13 @@ const Dashboard = () => {
     setConfirmState({ isOpen: true, planId: id });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (confirmState.planId) {
-      deleteTravelPlan(confirmState.planId);
+      try {
+        await deleteTravelPlan(confirmState.planId);
+      } catch (error) {
+        alert(error.message || 'Failed to delete travel plan. Please try again.');
+      }
     }
     setConfirmState({ isOpen: false, planId: null });
   };
@@ -45,7 +49,11 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {travelPlans.length === 0 ? (
+      {loading ? (
+        <div className={styles.emptyState}>
+          <div>Loading...</div>
+        </div>
+      ) : travelPlans.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyStateIcon}>🗺️</div>
           <h2 className={styles.emptyStateTitle}>No travel plans yet</h2>

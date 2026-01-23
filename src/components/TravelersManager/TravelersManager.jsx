@@ -23,8 +23,13 @@ const TravelersManager = ({ planId }) => {
     traveler => !tripTravelers.find(t => t.id === traveler.id)
   );
 
-  const handleAddExisting = (travelerId) => {
-    addTravelerToTrip(planId, travelerId);
+  const handleAddExisting = async (travelerId) => {
+    try {
+      await addTravelerToTrip(planId, travelerId);
+      setIsSelectModalOpen(false);
+    } catch (error) {
+      alert(error.message || 'Failed to add traveler. Please try again.');
+    }
   };
 
   const handleRemove = (travelerId) => {
@@ -35,15 +40,24 @@ const TravelersManager = ({ planId }) => {
     setConfirmState({ isOpen: true, travelerId });
   };
 
-  const handleConfirmRemove = () => {
+  const handleConfirmRemove = async () => {
     if (confirmState.travelerId) {
-      removeTravelerFromTrip(planId, confirmState.travelerId);
+      try {
+        await removeTravelerFromTrip(planId, confirmState.travelerId);
+      } catch (error) {
+        alert(error.message || 'Failed to remove traveler. Please try again.');
+      }
     }
     setConfirmState({ isOpen: false, travelerId: null });
   };
 
-  const handleNewTravelerAdded = (newTraveler) => {
-    addTravelerToTrip(planId, newTraveler.id);
+  const handleNewTravelerAdded = async (newTraveler) => {
+    try {
+      await addTravelerToTrip(planId, newTraveler.id);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      alert(error.message || 'Failed to add traveler. Please try again.');
+    }
   };
 
   return (

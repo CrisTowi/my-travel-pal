@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTravelContext } from '../../context/TravelContext';
 import Timeline from '../../components/Timeline/Timeline';
@@ -12,6 +12,8 @@ const TravelPlanDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getTravelPlan, deleteTravelPlan, deleteItemFromTravelPlan } = useTravelContext();
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('timeline');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedItemType, setSelectedItemType] = useState(null);
@@ -23,7 +25,27 @@ const TravelPlanDetail = () => {
     data: null 
   });
 
-  const plan = getTravelPlan(id);
+  useEffect(() => {
+    const fetchPlan = async () => {
+      setLoading(true);
+      const fetchedPlan = await getTravelPlan(id);
+      setPlan(fetchedPlan);
+      setLoading(false);
+    };
+
+    if (id) {
+      fetchPlan();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className={styles.notFound}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
   if (!plan) {
     return (
@@ -44,9 +66,13 @@ const TravelPlanDetail = () => {
     });
   };
 
-  const handleConfirmDeletePlan = () => {
-    deleteTravelPlan(id);
-    navigate('/');
+  const handleConfirmDeletePlan = async () => {
+    try {
+      await deleteTravelPlan(id);
+      navigate('/');
+    } catch (error) {
+      alert(error.message || 'Failed to delete travel plan. Please try again.');
+    }
     setConfirmState({ isOpen: false, type: null, data: null });
   };
 
@@ -78,9 +104,13 @@ const TravelPlanDetail = () => {
     });
   };
 
-  const handleConfirmDeleteItem = () => {
+  const handleConfirmDeleteItem = async () => {
     if (confirmState.data) {
-      deleteItemFromTravelPlan(id, confirmState.data.itemType, confirmState.data.itemId);
+      try {
+        await deleteItemFromTravelPlan(id, confirmState.data.itemType, confirmState.data.itemId);
+      } catch (error) {
+        alert(error.message || 'Failed to delete item. Please try again.');
+      }
     }
     setConfirmState({ isOpen: false, type: null, data: null });
   };

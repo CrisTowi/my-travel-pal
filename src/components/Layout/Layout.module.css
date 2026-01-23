@@ -70,6 +70,64 @@
   background-color: rgba(59, 130, 246, 0.1);
 }
 
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--border-color);
+}
+
+.userName {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.loginButton,
+.registerButton,
+.logoutButton {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.loginButton {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.loginButton:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.registerButton {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  border: none;
+}
+
+.registerButton:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.logoutButton {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.logoutButton:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
 .main {
   flex: 1;
   max-width: 1400px;
@@ -102,5 +160,16 @@
 
   .nav {
     gap: 1rem;
+  }
+
+  .userSection {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+    justify-content: space-between;
   }
 }

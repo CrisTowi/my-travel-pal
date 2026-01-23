@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const TravelContext = createContext();
 
@@ -10,175 +11,474 @@ export const useTravelContext = () => {
   return context;
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
 export const TravelProvider = ({ children }) => {
-  const [travelPlans, setTravelPlans] = useState(() => {
-    const saved = localStorage.getItem('travelPlans');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { token, isAuthenticated } = useAuth();
+  const [travelPlans, setTravelPlans] = useState([]);
+  const [globalTravelers, setGlobalTravelers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [globalTravelers, setGlobalTravelers] = useState(() => {
-    const saved = localStorage.getItem('globalTravelers');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  // Fetch data when authenticated
   useEffect(() => {
-    localStorage.setItem('travelPlans', JSON.stringify(travelPlans));
-  }, [travelPlans]);
-
-  useEffect(() => {
-    localStorage.setItem('globalTravelers', JSON.stringify(globalTravelers));
-  }, [globalTravelers]);
-
-  const addTravelPlan = (plan, travelerIds = []) => {
-    const newPlan = {
-      ...plan,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      activities: [],
-      hotels: [],
-      restaurants: [],
-      attractions: [],
-      transportation: [],
-      travelers: travelerIds, // Include travelers in the initial plan
-    };
-    // Use functional update to ensure we have the latest state
-    setTravelPlans(prevPlans => {
-      const updatedPlans = [...prevPlans, newPlan];
-      // Save to localStorage immediately to ensure persistence before navigation
-      localStorage.setItem('travelPlans', JSON.stringify(updatedPlans));
-      return updatedPlans;
-    });
-    return newPlan.id;
-  };
-
-  const updateTravelPlan = (id, updates) => {
-    setTravelPlans(travelPlans.map(plan =>
-      plan.id === id ? { ...plan, ...updates } : plan
-    ));
-  };
-
-  const deleteTravelPlan = (id) => {
-    setTravelPlans(travelPlans.filter(plan => plan.id !== id));
-  };
-
-  const getTravelPlan = (id) => {
-    // First check the state
-    const plan = travelPlans.find(plan => plan.id === id);
-    if (plan) return plan;
-
-    // Fallback to localStorage in case state hasn't updated yet
-    const saved = localStorage.getItem('travelPlans');
-    if (saved) {
-      const savedPlans = JSON.parse(saved);
-      return savedPlans.find(plan => plan.id === id);
+    if (isAuthenticated && token) {
+      fetchAllData();
+    } else {
+      setTravelPlans([]);
+      setGlobalTravelers([]);
+      setLoading(false);
     }
-    return null;
+  }, [isAuthenticated, token]);
+
+  const fetchAllData = async () => {
+    if (!token) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [plansResponse, travelersResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/travel-plans`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+        fetch(`${API_BASE_URL}/travelers`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+      ]);
+
+      if (plansResponse.ok && travelersResponse.ok) {
+        const plansData = await plansResponse.json();
+        const travelersData = await travelersResponse.json();
+
+        // Transform API data to match frontend format
+        const transformedPlans = plansData.travelPlans.map(plan => ({
+          id: plan._id,
+          name: plan.name,
+          description: plan.description,
+          startLocation: plan.startLocation,
+          startLocationData: plan.startLocationData,
+          endLocation: plan.endLocation,
+          endLocationData: plan.endLocationData,
+          startDate: plan.startDate,
+          endDate: plan.endDate,
+          travelers: plan.travelers.map(t => t._id || t),
+          createdAt: plan.createdAt,
+          // Item counts from API
+          activities: [],
+          hotels: [],
+          restaurants: [],
+          attractions: [],
+          transportation: [],
+        }));
+
+        const transformedTravelers = travelersData.travelers.map(traveler => ({
+          id: traveler._id,
+          name: traveler.name,
+          email: traveler.email,
+          dateOfBirth: traveler.dateOfBirth,
+          passportNumber: traveler.passportNumber,
+          profilePicture: traveler.profilePicture,
+          createdAt: traveler.createdAt,
+        }));
+
+        setTravelPlans(transformedPlans);
+        setGlobalTravelers(transformedTravelers);
+      } else {
+        throw new Error('Failed to fetch data');
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addItemToTravelPlan = (planId, itemType, item) => {
-    setTravelPlans(travelPlans.map(plan => {
-      if (plan.id === planId) {
-        const newItem = {
+  const fetchTravelPlan = async (id) => {
+    if (!token) return null;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-plans/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      const plan = data.travelPlan;
+
+      // Transform to match frontend format
+      return {
+        id: plan._id,
+        name: plan.name,
+        description: plan.description,
+        startLocation: plan.startLocation,
+        startLocationData: plan.startLocationData,
+        endLocation: plan.endLocation,
+        endLocationData: plan.endLocationData,
+        startDate: plan.startDate,
+        endDate: plan.endDate,
+        travelers: plan.travelers.map(t => t._id || t),
+        createdAt: plan.createdAt,
+        activities: plan.activities.map(item => transformItem(item)),
+        hotels: plan.hotels.map(item => transformItem(item)),
+        restaurants: plan.restaurants.map(item => transformItem(item)),
+        attractions: plan.attractions.map(item => transformItem(item)),
+        transportation: plan.transportation.map(item => transformItem(item)),
+      };
+    } catch (error) {
+      console.error('Error fetching travel plan:', error);
+      return null;
+    }
+  };
+
+  const transformItem = (item) => ({
+    id: item._id,
+    name: item.name,
+    description: item.description,
+    location: item.location,
+    locationData: item.locationData,
+    date: item.date,
+    checkIn: item.checkIn,
+    checkOut: item.checkOut,
+    price: item.price,
+    notes: item.notes,
+    travelers: item.travelers?.map(t => t._id || t) || [],
+    createdAt: item.createdAt,
+  });
+
+  const addTravelPlan = async (plan, travelerIds = []) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-plans`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...plan,
+          travelers: travelerIds,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create travel plan');
+      }
+
+      // Refresh travel plans
+      await fetchAllData();
+
+      return data.travelPlan._id;
+    } catch (error) {
+      console.error('Error creating travel plan:', error);
+      throw error;
+    }
+  };
+
+  const updateTravelPlan = async (id, updates) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-plans/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update travel plan');
+      }
+
+      // Refresh travel plans
+      await fetchAllData();
+    } catch (error) {
+      console.error('Error updating travel plan:', error);
+      throw error;
+    }
+  };
+
+  const deleteTravelPlan = async (id) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-plans/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete travel plan');
+      }
+
+      // Refresh travel plans
+      await fetchAllData();
+    } catch (error) {
+      console.error('Error deleting travel plan:', error);
+      throw error;
+    }
+  };
+
+  const getTravelPlan = async (id) => {
+    // Always fetch from API to ensure we have the latest data with items
+    return await fetchTravelPlan(id);
+  };
+
+  const addItemToTravelPlan = async (planId, itemType, item) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-items/plan/${planId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
           ...item,
-          id: Date.now().toString() + Math.random(),
-          createdAt: new Date().toISOString(),
-        };
-        return {
-          ...plan,
-          [itemType]: [...(plan[itemType] || []), newItem],
-        };
+          itemType,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add item');
       }
-      return plan;
-    }));
+
+      // Refresh the specific travel plan
+      const updatedPlan = await fetchTravelPlan(planId);
+      if (updatedPlan) {
+        setTravelPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
+      }
+    } catch (error) {
+      console.error('Error adding item:', error);
+      throw error;
+    }
   };
 
-  const deleteItemFromTravelPlan = (planId, itemType, itemId) => {
-    setTravelPlans(travelPlans.map(plan => {
-      if (plan.id === planId) {
-        return {
-          ...plan,
-          [itemType]: plan[itemType].filter(item => item.id !== itemId),
-        };
+  const deleteItemFromTravelPlan = async (planId, itemType, itemId) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-items/plan/${planId}/item/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete item');
       }
-      return plan;
-    }));
+
+      // Refresh the specific travel plan
+      const updatedPlan = await fetchTravelPlan(planId);
+      if (updatedPlan) {
+        setTravelPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      throw error;
+    }
   };
 
-  const updateItemInTravelPlan = (planId, itemType, itemId, updates) => {
-    setTravelPlans(travelPlans.map(plan => {
-      if (plan.id === planId) {
-        return {
-          ...plan,
-          [itemType]: plan[itemType].map(item =>
-            item.id === itemId ? { ...item, ...updates } : item
-          ),
-        };
+  const updateItemInTravelPlan = async (planId, itemType, itemId, updates) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-items/plan/${planId}/item/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update item');
       }
-      return plan;
-    }));
+
+      // Refresh the specific travel plan
+      const updatedPlan = await fetchTravelPlan(planId);
+      if (updatedPlan) {
+        setTravelPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
+      }
+    } catch (error) {
+      console.error('Error updating item:', error);
+      throw error;
+    }
   };
 
   // Global Travelers Management
-  const addGlobalTraveler = (traveler) => {
-    const newTraveler = {
-      ...traveler,
-      id: Date.now().toString() + Math.random(),
-      createdAt: new Date().toISOString(),
-    };
-    setGlobalTravelers([...globalTravelers, newTraveler]);
-    return newTraveler;
+  const addGlobalTraveler = async (traveler) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travelers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(traveler),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create traveler');
+      }
+
+      // Refresh travelers
+      await fetchAllData();
+
+      return {
+        id: data.traveler._id,
+        name: data.traveler.name,
+        email: data.traveler.email,
+        dateOfBirth: data.traveler.dateOfBirth,
+        passportNumber: data.traveler.passportNumber,
+        profilePicture: data.traveler.profilePicture,
+        createdAt: data.traveler.createdAt,
+      };
+    } catch (error) {
+      console.error('Error creating traveler:', error);
+      throw error;
+    }
   };
 
-  const updateGlobalTraveler = (travelerId, updates) => {
-    setGlobalTravelers(globalTravelers.map(traveler =>
-      traveler.id === travelerId ? { ...traveler, ...updates } : traveler
-    ));
+  const updateGlobalTraveler = async (travelerId, updates) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travelers/${travelerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update traveler');
+      }
+
+      // Refresh travelers
+      await fetchAllData();
+    } catch (error) {
+      console.error('Error updating traveler:', error);
+      throw error;
+    }
   };
 
-  const deleteGlobalTraveler = (travelerId) => {
-    // Remove traveler from global list
-    setGlobalTravelers(globalTravelers.filter(traveler => traveler.id !== travelerId));
+  const deleteGlobalTraveler = async (travelerId) => {
+    if (!token) throw new Error('Not authenticated');
 
-    // Remove traveler from all travel plans
-    setTravelPlans(prevPlans => {
-      const updatedPlans = prevPlans.map(plan => ({
-        ...plan,
-        travelers: (plan.travelers || []).filter(id => id !== travelerId),
-      }));
-      // Save to localStorage immediately
-      localStorage.setItem('travelPlans', JSON.stringify(updatedPlans));
-      return updatedPlans;
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/travelers/${travelerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete traveler');
+      }
+
+      // Remove traveler from all travel plans locally
+      setTravelPlans(prevPlans => {
+        const updatedPlans = prevPlans.map(plan => ({
+          ...plan,
+          travelers: (plan.travelers || []).filter(id => id !== travelerId),
+        }));
+        return updatedPlans;
+      });
+
+      // Refresh travelers
+      await fetchAllData();
+    } catch (error) {
+      console.error('Error deleting traveler:', error);
+      throw error;
+    }
   };
 
   // Travel Plan Travelers Management
-  const addTravelerToTrip = (planId, travelerId) => {
-    setTravelPlans(prevPlans => {
-      const updatedPlans = prevPlans.map(plan => {
-        if (plan.id === planId) {
-          const travelers = plan.travelers || [];
-          if (!travelers.includes(travelerId)) {
-            return { ...plan, travelers: [...travelers, travelerId] };
-          }
-        }
-        return plan;
+  const addTravelerToTrip = async (planId, travelerId) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-plans/${planId}/travelers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ travelerId }),
       });
-      // Save to localStorage immediately
-      localStorage.setItem('travelPlans', JSON.stringify(updatedPlans));
-      return updatedPlans;
-    });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add traveler to trip');
+      }
+
+      // Refresh travel plans
+      await fetchAllData();
+    } catch (error) {
+      console.error('Error adding traveler to trip:', error);
+      throw error;
+    }
   };
 
-  const removeTravelerFromTrip = (planId, travelerId) => {
-    setTravelPlans(travelPlans.map(plan => {
-      if (plan.id === planId) {
-        return {
-          ...plan,
-          travelers: (plan.travelers || []).filter(id => id !== travelerId),
-        };
+  const removeTravelerFromTrip = async (planId, travelerId) => {
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/travel-plans/${planId}/travelers`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ travelerId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to remove traveler from trip');
       }
-      return plan;
-    }));
+
+      // Refresh travel plans
+      await fetchAllData();
+    } catch (error) {
+      console.error('Error removing traveler from trip:', error);
+      throw error;
+    }
   };
 
   // Get travelers for a specific trip
@@ -192,6 +492,9 @@ export const TravelProvider = ({ children }) => {
     <TravelContext.Provider
       value={{
         travelPlans,
+        globalTravelers,
+        loading,
+        error,
         addTravelPlan,
         updateTravelPlan,
         deleteTravelPlan,
@@ -199,13 +502,13 @@ export const TravelProvider = ({ children }) => {
         addItemToTravelPlan,
         deleteItemFromTravelPlan,
         updateItemInTravelPlan,
-        globalTravelers,
         addGlobalTraveler,
         updateGlobalTraveler,
         deleteGlobalTraveler,
         addTravelerToTrip,
         removeTravelerFromTrip,
         getTripTravelers,
+        refreshData: fetchAllData,
       }}
     >
       {children}

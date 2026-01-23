@@ -1,10 +1,18 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import styles from './Layout.module.css';
 
 const Layout = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const isHome = location.pathname === '/';
   const isTravelers = location.pathname === '/travelers';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className={styles.layout}>
@@ -27,6 +35,12 @@ const Layout = ({ children }) => {
             >
               Travelers
             </Link>
+            <div className={styles.userSection}>
+              <span className={styles.userName}>{user?.name || user?.email}</span>
+              <button className={styles.logoutButton} onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
           </nav>
         </div>
       </header>

@@ -77,7 +77,7 @@ const CreateTravelModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Check if at least one traveler is selected
@@ -86,22 +86,26 @@ const CreateTravelModal = ({ isOpen, onClose }) => {
       return;
     }
     
-    // Add travelers directly when creating the plan to avoid race conditions
-    const planId = addTravelPlan(formData, selectedTravelers);
-    
-    setFormData({
-      name: '',
-      description: '',
-      startLocation: '',
-      startLocationData: null,
-      endLocation: '',
-      endLocationData: null,
-      startDate: '',
-      endDate: '',
-    });
-    setSelectedTravelers([]);
-    onClose();
-    navigate(`/travel/${planId}`);
+    try {
+      // Add travelers directly when creating the plan to avoid race conditions
+      const planId = await addTravelPlan(formData, selectedTravelers);
+      
+      setFormData({
+        name: '',
+        description: '',
+        startLocation: '',
+        startLocationData: null,
+        endLocation: '',
+        endLocationData: null,
+        startDate: '',
+        endDate: '',
+      });
+      setSelectedTravelers([]);
+      onClose();
+      navigate(`/travel/${planId}`);
+    } catch (error) {
+      alert(error.message || 'Failed to create travel plan. Please try again.');
+    }
   };
 
   const toggleTraveler = (travelerId) => {

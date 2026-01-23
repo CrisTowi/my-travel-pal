@@ -6,7 +6,7 @@ import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import styles from './Travelers.module.css';
 
 const Travelers = () => {
-  const { globalTravelers, addGlobalTraveler, updateGlobalTraveler, deleteGlobalTraveler } = useTravelContext();
+  const { globalTravelers, addGlobalTraveler, updateGlobalTraveler, deleteGlobalTraveler, loading } = useTravelContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingTraveler, setEditingTraveler] = useState(null);
   const [confirmState, setConfirmState] = useState({ isOpen: false, travelerId: null, travelerName: '' });
@@ -29,9 +29,13 @@ const Travelers = () => {
     });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (confirmState.travelerId) {
-      deleteGlobalTraveler(confirmState.travelerId);
+      try {
+        await deleteGlobalTraveler(confirmState.travelerId);
+      } catch (error) {
+        alert(error.message || 'Failed to delete traveler. Please try again.');
+      }
     }
     setConfirmState({ isOpen: false, travelerId: null, travelerName: '' });
   };
@@ -68,7 +72,11 @@ const Travelers = () => {
         </button>
       </div>
 
-      {globalTravelers.length === 0 ? (
+          {loading ? (
+            <div className={styles.emptyState}>
+              <div>Loading...</div>
+            </div>
+          ) : globalTravelers.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>👤</div>
           <h2 className={styles.emptyTitle}>No travelers yet</h2>

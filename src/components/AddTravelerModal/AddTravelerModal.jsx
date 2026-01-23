@@ -71,7 +71,7 @@ const AddTravelerModal = ({ isOpen, onClose, editTraveler, onTravelerAdded }) =>
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validate email before submission
@@ -81,24 +81,28 @@ const AddTravelerModal = ({ isOpen, onClose, editTraveler, onTravelerAdded }) =>
       return;
     }
     
-    if (editTraveler) {
-      updateGlobalTraveler(editTraveler.id, formData);
-    } else {
-      const newTraveler = addGlobalTraveler(formData);
-      if (onTravelerAdded) {
-        onTravelerAdded(newTraveler);
+    try {
+      if (editTraveler) {
+        await updateGlobalTraveler(editTraveler.id, formData);
+      } else {
+        const newTraveler = await addGlobalTraveler(formData);
+        if (onTravelerAdded) {
+          onTravelerAdded(newTraveler);
+        }
       }
+      
+      setFormData({
+        name: '',
+        email: '',
+        passportNumber: '',
+        dateOfBirth: '',
+        profilePicture: '',
+      });
+      setErrors({});
+      onClose();
+    } catch (error) {
+      alert(error.message || 'Failed to save traveler. Please try again.');
     }
-    
-    setFormData({
-      name: '',
-      email: '',
-      passportNumber: '',
-      dateOfBirth: '',
-      profilePicture: '',
-    });
-    setErrors({});
-    onClose();
   };
 
   const handleBackdropClick = (e) => {

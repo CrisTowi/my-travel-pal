@@ -35,9 +35,13 @@ const Timeline = ({ plan, itemTypes, onEditItem, onAddItemBetween }) => {
     setConfirmState({ isOpen: true, item });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (confirmState.item) {
-      deleteItemFromTravelPlan(plan.id, confirmState.item.itemType, confirmState.item.id);
+      try {
+        await deleteItemFromTravelPlan(plan.id, confirmState.item.itemType, confirmState.item.id);
+      } catch (error) {
+        alert(error.message || 'Failed to delete item. Please try again.');
+      }
     }
     setConfirmState({ isOpen: false, item: null });
   };

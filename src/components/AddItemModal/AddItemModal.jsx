@@ -111,31 +111,35 @@ const AddItemModal = ({ isOpen, onClose, planId, plan, itemType, itemConfig, edi
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const typeToUse = selectedType || itemType;
     
-    if (editItem) {
-      // Update existing item
-      updateItemInTravelPlan(planId, typeToUse, editItem.id, formData);
-    } else {
-      // Add new item
-      addItemToTravelPlan(planId, typeToUse, formData);
+    try {
+      if (editItem) {
+        // Update existing item
+        await updateItemInTravelPlan(planId, typeToUse, editItem.id, formData);
+      } else {
+        // Add new item
+        await addItemToTravelPlan(planId, typeToUse, formData);
+      }
+      setFormData({
+        name: '',
+        description: '',
+        date: '',
+        checkIn: '',
+        checkOut: '',
+        location: '',
+        locationData: null,
+        price: '',
+        notes: '',
+        travelers: [],
+      });
+      setSelectedType(null);
+      onClose();
+    } catch (error) {
+      alert(error.message || 'Failed to save item. Please try again.');
     }
-    setFormData({
-      name: '',
-      description: '',
-      date: '',
-      checkIn: '',
-      checkOut: '',
-      location: '',
-      locationData: null,
-      price: '',
-      notes: '',
-      travelers: [],
-    });
-    setSelectedType(null);
-    onClose();
   };
 
   const toggleTraveler = (travelerId) => {
