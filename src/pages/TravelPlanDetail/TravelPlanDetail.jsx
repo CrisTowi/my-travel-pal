@@ -5,6 +5,7 @@ import Timeline from '../../components/Timeline/Timeline';
 import AddItemModal from '../../components/AddItemModal/AddItemModal';
 import MapView from '../../components/MapView/MapView';
 import TravelersManager from '../../components/TravelersManager/TravelersManager';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import styles from './TravelPlanDetail.module.css';
 
 const TravelPlanDetail = () => {
@@ -16,6 +17,11 @@ const TravelPlanDetail = () => {
   const [selectedItemType, setSelectedItemType] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [dateBoundaries, setDateBoundaries] = useState(null);
+  const [confirmState, setConfirmState] = useState({ 
+    isOpen: false, 
+    type: null, 
+    data: null 
+  });
 
   const plan = getTravelPlan(id);
 
@@ -31,10 +37,17 @@ const TravelPlanDetail = () => {
   }
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this travel plan?')) {
-      deleteTravelPlan(id);
-      navigate('/');
-    }
+    setConfirmState({ 
+      isOpen: true, 
+      type: 'plan', 
+      data: null 
+    });
+  };
+
+  const handleConfirmDeletePlan = () => {
+    deleteTravelPlan(id);
+    navigate('/');
+    setConfirmState({ isOpen: false, type: null, data: null });
   };
 
   const handleAddItem = (itemType) => {
@@ -58,9 +71,18 @@ const TravelPlanDetail = () => {
   };
 
   const handleDeleteItem = (itemType, itemId) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      deleteItemFromTravelPlan(id, itemType, itemId);
+    setConfirmState({ 
+      isOpen: true, 
+      type: 'item', 
+      data: { itemType, itemId } 
+    });
+  };
+
+  const handleConfirmDeleteItem = () => {
+    if (confirmState.data) {
+      deleteItemFromTravelPlan(id, confirmState.data.itemType, confirmState.data.itemId);
     }
+    setConfirmState({ isOpen: false, type: null, data: null });
   };
 
   const handleCloseModal = () => {
@@ -243,6 +265,22 @@ const TravelPlanDetail = () => {
         editItem={editingItem}
         dateBoundaries={dateBoundaries}
         itemTypes={itemTypes}
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState({ isOpen: false, type: null, data: null })}
+        onConfirm={confirmState.type === 'plan' ? handleConfirmDeletePlan : handleConfirmDeleteItem}
+        title={confirmState.type === 'plan' ? 'Delete Travel Plan' : 'Delete Item'}
+        message={
+          confirmState.type === 'plan' 
+            ? 'Are you sure you want to delete this travel plan? This action cannot be undone.'
+            : 'Are you sure you want to delete this item? This action cannot be undone.'
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        icon={confirmState.type === 'plan' ? '🗑️' : '⚠️'}
       />
     </div>
   );

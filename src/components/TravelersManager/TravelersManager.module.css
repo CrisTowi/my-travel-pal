@@ -32,7 +32,8 @@
 }
 
 .addButton,
-.addExistingButton {
+.addExistingButton,
+.manageButton {
   width: 2rem;
   height: 2rem;
   display: flex;
@@ -45,11 +46,23 @@
   font-size: 1.125rem;
   transition: all 0.2s ease;
   padding: 0;
+  text-decoration: none;
+}
+
+.manageButton {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
 .addButton:hover,
 .addExistingButton:hover {
   background-color: var(--primary-dark);
+  transform: scale(1.1);
+}
+
+.manageButton:hover {
+  background-color: var(--secondary-color);
+  color: white;
   transform: scale(1.1);
 }
 
@@ -83,6 +96,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -216,6 +230,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -237,6 +252,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -367,16 +383,16 @@
   .travelersGrid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
-  
+
   .modal {
     max-height: 90vh;
     border-radius: var(--radius-lg);
   }
-  
+
   .modalHeader {
     padding: 1rem 1.5rem;
   }
-  
+
   .modalContent {
     padding: 1.5rem;
   }

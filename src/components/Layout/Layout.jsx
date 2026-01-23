@@ -4,6 +4,7 @@ import styles from './Layout.module.css';
 const Layout = ({ children }) => {
   const location = useLocation();
   const isHome = location.pathname === '/';
+  const isTravelers = location.pathname === '/travelers';
 
   return (
     <div className={styles.layout}>
@@ -19,6 +20,12 @@ const Layout = ({ children }) => {
               className={`${styles.navLink} ${isHome ? styles.active : ''}`}
             >
               My Travels
+            </Link>
+            <Link
+              to="/travelers"
+              className={`${styles.navLink} ${isTravelers ? styles.active : ''}`}
+            >
+              Travelers
             </Link>
           </nav>
         </div>

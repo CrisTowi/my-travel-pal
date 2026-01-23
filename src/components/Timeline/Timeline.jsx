@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTravelContext } from '../../context/TravelContext';
 import TravelerAvatar from '../TravelerAvatar/TravelerAvatar';
+import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import styles from './Timeline.module.css';
 
 const Timeline = ({ plan, itemTypes, onEditItem, onAddItemBetween }) => {
   const { deleteItemFromTravelPlan, globalTravelers } = useTravelContext();
+  const [confirmState, setConfirmState] = useState({ isOpen: false, item: null });
 
   // Combine all items with their type information
   const getAllItems = () => {
@@ -30,9 +32,14 @@ const Timeline = ({ plan, itemTypes, onEditItem, onAddItemBetween }) => {
   };
 
   const handleDelete = (item) => {
-    if (window.confirm(`Are you sure you want to delete this ${item.itemConfig.label.toLowerCase()}?`)) {
-      deleteItemFromTravelPlan(plan.id, item.itemType, item.id);
+    setConfirmState({ isOpen: true, item });
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmState.item) {
+      deleteItemFromTravelPlan(plan.id, confirmState.item.itemType, confirmState.item.id);
     }
+    setConfirmState({ isOpen: false, item: null });
   };
 
   const formatDate = (dateString) => {
@@ -210,6 +217,18 @@ const Timeline = ({ plan, itemTypes, onEditItem, onAddItemBetween }) => {
           </div>
         </React.Fragment>
       ))}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState({ isOpen: false, item: null })}
+        onConfirm={handleConfirmDelete}
+        title={`Delete ${confirmState.item?.itemConfig?.label || 'Item'}`}
+        message={`Are you sure you want to delete this ${confirmState.item?.itemConfig?.label.toLowerCase() || 'item'}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        icon="🗑️"
+      />
     </div>
   );
 };

@@ -1,20 +1,23 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTravelContext } from '../../context/TravelContext';
 import TravelerAvatar from '../TravelerAvatar/TravelerAvatar';
 import AddTravelerModal from '../AddTravelerModal/AddTravelerModal';
+import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import styles from './TravelersManager.module.css';
 
 const TravelersManager = ({ planId }) => {
-  const { 
-    globalTravelers, 
-    getTripTravelers, 
-    addTravelerToTrip, 
-    removeTravelerFromTrip 
+  const {
+    globalTravelers,
+    getTripTravelers,
+    addTravelerToTrip,
+    removeTravelerFromTrip
   } = useTravelContext();
-  
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
-  
+  const [confirmState, setConfirmState] = useState({ isOpen: false, travelerId: null });
+
   const tripTravelers = getTripTravelers(planId);
   const availableTravelers = globalTravelers.filter(
     traveler => !tripTravelers.find(t => t.id === traveler.id)
@@ -29,9 +32,14 @@ const TravelersManager = ({ planId }) => {
       alert('At least one traveler must remain in the travel plan.');
       return;
     }
-    if (window.confirm('Remove this traveler from the trip?')) {
-      removeTravelerFromTrip(planId, travelerId);
+    setConfirmState({ isOpen: true, travelerId });
+  };
+
+  const handleConfirmRemove = () => {
+    if (confirmState.travelerId) {
+      removeTravelerFromTrip(planId, confirmState.travelerId);
     }
+    setConfirmState({ isOpen: false, travelerId: null });
   };
 
   const handleNewTravelerAdded = (newTraveler) => {
@@ -45,6 +53,13 @@ const TravelersManager = ({ planId }) => {
           Travelers ({tripTravelers.length})
         </h3>
         <div className={styles.headerActions}>
+          <Link
+            to="/travelers"
+            className={styles.manageButton}
+            title="Manage all travelers"
+          >
+            <span className={styles.buttonIcon}>⚙️</span>
+          </Link>
           <button
             className={styles.addExistingButton}
             onClick={() => setIsSelectModalOpen(true)}
@@ -146,6 +161,18 @@ const TravelersManager = ({ planId }) => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState({ isOpen: false, travelerId: null })}
+        onConfirm={handleConfirmRemove}
+        title="Remove Traveler"
+        message="Are you sure you want to remove this traveler from the trip?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        type="warning"
+        icon="👤"
+      />
     </div>
   );
 };

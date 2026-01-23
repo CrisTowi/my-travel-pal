@@ -52,7 +52,7 @@ export const TravelProvider = ({ children }) => {
   };
 
   const updateTravelPlan = (id, updates) => {
-    setTravelPlans(travelPlans.map(plan => 
+    setTravelPlans(travelPlans.map(plan =>
       plan.id === id ? { ...plan, ...updates } : plan
     ));
   };
@@ -65,7 +65,7 @@ export const TravelProvider = ({ children }) => {
     // First check the state
     const plan = travelPlans.find(plan => plan.id === id);
     if (plan) return plan;
-    
+
     // Fallback to localStorage in case state hasn't updated yet
     const saved = localStorage.getItem('travelPlans');
     if (saved) {
@@ -109,7 +109,7 @@ export const TravelProvider = ({ children }) => {
       if (plan.id === planId) {
         return {
           ...plan,
-          [itemType]: plan[itemType].map(item => 
+          [itemType]: plan[itemType].map(item =>
             item.id === itemId ? { ...item, ...updates } : item
           ),
         };
@@ -136,7 +136,19 @@ export const TravelProvider = ({ children }) => {
   };
 
   const deleteGlobalTraveler = (travelerId) => {
+    // Remove traveler from global list
     setGlobalTravelers(globalTravelers.filter(traveler => traveler.id !== travelerId));
+
+    // Remove traveler from all travel plans
+    setTravelPlans(prevPlans => {
+      const updatedPlans = prevPlans.map(plan => ({
+        ...plan,
+        travelers: (plan.travelers || []).filter(id => id !== travelerId),
+      }));
+      // Save to localStorage immediately
+      localStorage.setItem('travelPlans', JSON.stringify(updatedPlans));
+      return updatedPlans;
+    });
   };
 
   // Travel Plan Travelers Management

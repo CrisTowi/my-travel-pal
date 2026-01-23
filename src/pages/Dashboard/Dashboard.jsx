@@ -3,17 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useTravelContext } from '../../context/TravelContext';
 import TravelPlanCard from '../../components/TravelPlanCard/TravelPlanCard';
 import CreateTravelModal from '../../components/CreateTravelModal/CreateTravelModal';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import styles from './Dashboard.module.css';
 
 const Dashboard = () => {
   const { travelPlans, deleteTravelPlan } = useTravelContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmState, setConfirmState] = useState({ isOpen: false, planId: null });
   const navigate = useNavigate();
 
   const handleDeletePlan = (id) => {
-    if (window.confirm('Are you sure you want to delete this travel plan?')) {
-      deleteTravelPlan(id);
+    setConfirmState({ isOpen: true, planId: id });
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmState.planId) {
+      deleteTravelPlan(confirmState.planId);
     }
+    setConfirmState({ isOpen: false, planId: null });
   };
 
   const handleCardClick = (id) => {
@@ -68,6 +75,18 @@ const Dashboard = () => {
       <CreateTravelModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState({ isOpen: false, planId: null })}
+        onConfirm={handleConfirmDelete}
+        title="Delete Travel Plan"
+        message="Are you sure you want to delete this travel plan? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        icon="🗑️"
       />
     </div>
   );
