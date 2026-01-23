@@ -114,7 +114,7 @@ const AddTravelerModal = ({ isOpen, onClose, editTraveler, onTravelerAdded }) =>
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {editTraveler ? 'Edit Traveler' : 'Add New Traveler'}
+            {editTraveler ? 'Edit Traveler' : 'Create Traveler'}
           </h2>
           <button className={styles.closeButton} onClick={onClose}>
             ×
@@ -212,7 +212,7 @@ const AddTravelerModal = ({ isOpen, onClose, editTraveler, onTravelerAdded }) =>
               Cancel
             </button>
             <button type="submit" className={styles.submitButton}>
-              {editTraveler ? 'Save Changes' : 'Add Traveler'}
+              {editTraveler ? 'Save Changes' : 'Create Traveler'}
             </button>
           </div>
         </form>

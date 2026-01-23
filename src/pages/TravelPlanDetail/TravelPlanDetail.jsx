@@ -229,14 +229,14 @@ const TravelPlanDetail = () => {
                               <button
                                 className={styles.editItemButton}
                                 onClick={() => handleEditItem({ ...listItem, itemType: item.type, itemConfig: item })}
-                                title="Edit"
+                                title="Edit Item"
                               >
                                 ✏️
                               </button>
                               <button
                                 className={styles.deleteItemButton}
                                 onClick={() => handleDeleteItem(item.type, listItem.id)}
-                                title="Delete"
+                                title="Delete Item"
                               >
                                 ×
                               </button>

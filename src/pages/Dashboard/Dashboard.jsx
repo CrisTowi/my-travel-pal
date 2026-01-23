@@ -41,7 +41,7 @@ const Dashboard = () => {
           onClick={() => setIsModalOpen(true)}
         >
           <span className={styles.createIcon}>+</span>
-          New Travel Plan
+          Create Travel Plan
         </button>
       </div>
 

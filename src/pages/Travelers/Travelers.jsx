@@ -64,7 +64,7 @@ const Travelers = () => {
           onClick={handleAddNew}
         >
           <span className={styles.addIcon}>+</span>
-          Add Traveler
+          Create Traveler
         </button>
       </div>
 
@@ -79,7 +79,7 @@ const Travelers = () => {
             className={styles.emptyButton}
             onClick={handleAddNew}
           >
-            Add Your First Traveler
+            Create Your First Traveler
           </button>
         </div>
       ) : (
@@ -92,14 +92,14 @@ const Travelers = () => {
                   <button
                     className={styles.editButton}
                     onClick={() => handleEdit(traveler)}
-                    title="Edit traveler"
+                    title="Edit Traveler"
                   >
                     ✏️
                   </button>
                   <button
                     className={styles.deleteButton}
                     onClick={() => handleDelete(traveler)}
-                    title="Delete traveler"
+                    title="Delete Traveler"
                   >
                     ×
                   </button>

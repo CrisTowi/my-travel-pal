@@ -70,7 +70,7 @@ const TravelersManager = ({ planId }) => {
           <button
             className={styles.addButton}
             onClick={() => setIsAddModalOpen(true)}
-            title="Add new traveler"
+            title="Create new traveler"
           >
             <span className={styles.buttonIcon}>+</span>
           </button>

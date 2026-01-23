@@ -35,18 +35,18 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   color: white;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-weight: 600;
   font-size: 1rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .addButton:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
 
@@ -88,17 +88,18 @@
 }
 
 .emptyButton {
-  padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   color: white;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.125rem;
+  box-shadow: var(--shadow-md);
   transition: all 0.2s ease;
 }
 
 .emptyButton:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
 

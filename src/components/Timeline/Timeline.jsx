@@ -130,14 +130,14 @@ const Timeline = ({ plan, itemTypes, onEditItem, onAddItemBetween }) => {
                     <button
                       className={styles.editButton}
                       onClick={() => onEditItem(item)}
-                      title="Edit item"
+                      title="Edit Item"
                     >
                       ✏️
                     </button>
                     <button
                       className={styles.deleteButton}
                       onClick={() => handleDelete(item)}
-                      title="Delete item"
+                      title="Delete Item"
                     >
                       ×
                     </button>
